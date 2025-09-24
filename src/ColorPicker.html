@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 10px;
+      }
+      label, input, button {
+        display: block;
+        margin-bottom: 10px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      input[type="color"] {
+        height: 50px;
+        padding: 0;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="highlightForm">
+      <input type="color" id="color" name="color" value="#ffff00">
+      <button type="submit">OK</button>
+    </form>
+    <script>
+      document.getElementById('highlightForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formObject = {};
+        formObject.color = document.getElementById('color').value;
+        
+        google.script.run
+          .withSuccessHandler(function() {
+            google.script.host.close();
+          })
+          .withFailureHandler(function(error) {
+            alert(error.message);
+          })
+          .processHighlight(formObject);
+      });
+    </script>
+  </body>
+</html>

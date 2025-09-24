@@ -1,3 +1,40 @@
+/**
+ * Reads doc IDs from script parameters and installs onOpen triggers for each.
+ * Expects a comma-separated list of doc IDs in script properties under 'DOC_IDS'.
+ */
+function installTriggersFromScriptParameters() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const docIdsParam = scriptProperties.getProperty('DOC_IDS');
+  if (!docIdsParam) {
+    throw new Error('No DOC_IDS parameter found in script properties.');
+  }
+  const docIds = docIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+  docIds.forEach(installOnOpenTriggerForDoc);
+}
+
+/**
+ * Installs an onOpen trigger for a Google Doc by its ID, calling the menu creation function.
+ * @param {string} docId - The ID of the Google Doc to attach the trigger to.
+ */
+function installOnOpenTriggerForDoc(docId: string) {
+  // Remove existing triggers for this function and doc to avoid duplicates
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (
+      triggers[i].getHandlerFunction() === 'createDocHighlightMenu' &&
+      triggers[i].getTriggerSourceId &&
+      triggers[i].getTriggerSourceId() === docId
+    ) {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  ScriptApp.newTrigger('createDocHighlightMenu')
+    .forDocument(docId)
+    .onOpen()
+    .create();
+}
+
 function onOpen() {
   DocumentApp.getUi()
     .createMenu('Highlight Word')
@@ -5,8 +42,12 @@ function onOpen() {
     .addToUi();
 }
 
+function createDocHighlightMenu(event: GoogleAppsScript.Events.DocsOnOpen) {
+    onOpen();
+}
+
 function showColorPrompt() {
-  const html = HtmlService.createHtmlOutputFromFile('ColorPicker')
+  const html = HtmlService.createHtmlOutputFromFile('src/ColorPicker')
     .setWidth(200)
     .setHeight(200);
   DocumentApp.getUi().showModalDialog(html, 'Select a Color');
