@@ -8,29 +8,64 @@
         padding: 10px;
       }
       label, input, button {
-        display: block;
+        display: inline-block;
         margin-bottom: 10px;
         width: 100%;
         box-sizing: border-box;
       }
       input[type="color"] {
-        height: 50px;
         padding: 0;
         border: none;
+      }
+      #swatch-container {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .swatch {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 1px solid #ccc;
+      }
+      p {
+        margin-top: 15px;
+        margin-bottom: 5px;
+        font-size: 0.9em;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid #eee;
       }
     </style>
   </head>
   <body>
+    <div id="swatch-container"></div>
+    <hr>
+    <p>Or pick a custom color:</p>
     <form id="highlightForm">
       <input type="color" id="color" name="color" value="#ffff00">
       <button type="submit">OK</button>
     </form>
     <script>
-      document.getElementById('highlightForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formObject = {};
-        formObject.color = document.getElementById('color').value;
-        
+      const colors = [
+        '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff9900',
+        '#adff2f', '#ff69b4', '#87cefa', '#ff0000', '#c0c0c0'
+      ];
+
+      const swatchContainer = document.getElementById('swatch-container');
+      colors.forEach(color => {
+        const swatch = document.createElement('div');
+        swatch.className = 'swatch';
+        swatch.style.backgroundColor = color;
+        swatch.dataset.color = color;
+        swatchContainer.appendChild(swatch);
+      });
+
+      function processColor(color) {
         google.script.run
           .withSuccessHandler(function() {
             google.script.host.close();
@@ -38,8 +73,23 @@
           .withFailureHandler(function(error) {
             alert(error.message);
           })
-          .processHighlight(formObject);
+          .processHighlight({ color: color });
+      }
+
+      const colorInput = document.getElementById('color');
+
+      swatchContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('swatch')) {
+          const c = e.target.dataset.color;
+          colorInput.value = c;
+          processColor(c);
+        }
+      });
+
+      document.getElementById('highlightForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const color = colorInput.value;
+        processColor(color);
       });
     </script>
   </body>
-</html>

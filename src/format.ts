@@ -37,7 +37,7 @@ function installOnOpenTriggerForDoc(docId: string) {
 
 function onOpen() {
   DocumentApp.getUi()
-    .createMenu('Highlight Word')
+    .createMenu('Mass Format')
     .addItem('Highlight Selection everywhere', 'showColorPrompt')
     .addToUi();
 }
@@ -47,9 +47,14 @@ function createDocHighlightMenu(event: GoogleAppsScript.Events.DocsOnOpen) {
 }
 
 function showColorPrompt() {
+  const selection = getSelectedText();
+  if (!selection) {
+    DocumentApp.getUi().alert('Please select a word or phrase to highlight first.');
+    return;
+  }
   const html = HtmlService.createHtmlOutputFromFile('src/ColorPicker')
     .setWidth(200)
-    .setHeight(200);
+
   DocumentApp.getUi().showModalDialog(html, 'Select a Color');
 }
 
@@ -89,8 +94,9 @@ function getSelectedText() {
     var element = selectedElements[i].getElement();
 
     // Check if the element is editable text
-    if (element.editAsText) {
-      var textElement = element.editAsText();
+    const maybeEdit = (element as any).editAsText;
+    if (typeof maybeEdit === 'function') {
+      var textElement = maybeEdit.call(element);
       if (selectedElements[i].isPartial()) {
         // If only part of the element is selected, get the specific range
         theText += textElement.getText().substring(
@@ -138,11 +144,5 @@ function highlightWord(wordToFind: string, highlightColor: string) {
     count++;
 
     foundElement = body.findText(searchPattern, foundElement);
-  }
-
-  if (count > 0) {
-    DocumentApp.getUi().alert(`Highlighted ${count} instance(s) of "${wordToFind}".`);
-  } else {
-    DocumentApp.getUi().alert(`No instances of "${wordToFind}" were found.`);
   }
 }
