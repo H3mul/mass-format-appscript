@@ -9,6 +9,13 @@ function installTriggersFromScriptParameters() {
     throw new Error('No DOC_IDS parameter found in script properties.');
   }
   const docIds = docIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+
+  // Remove all existing triggers to avoid duplicates
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    ScriptApp.deleteTrigger(triggers[i]);
+  }
+
   docIds.forEach(installOnOpenTriggerForDoc);
 }
 
@@ -17,18 +24,6 @@ function installTriggersFromScriptParameters() {
  * @param {string} docId - The ID of the Google Doc to attach the trigger to.
  */
 function installOnOpenTriggerForDoc(docId: string) {
-  // Remove existing triggers for this function and doc to avoid duplicates
-  const triggers = ScriptApp.getProjectTriggers();
-  for (let i = 0; i < triggers.length; i++) {
-    if (
-      triggers[i].getHandlerFunction() === 'createDocHighlightMenu' &&
-      triggers[i].getTriggerSourceId &&
-      triggers[i].getTriggerSourceId() === docId
-    ) {
-      ScriptApp.deleteTrigger(triggers[i]);
-    }
-  }
-
   ScriptApp.newTrigger('createDocHighlightMenu')
     .forDocument(docId)
     .onOpen()
