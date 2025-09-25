@@ -40,6 +40,8 @@
         border: none;
         border-top: 1px solid #eee;
       }
+      .clear-swatch { position: relative; display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px dashed #bbb; }
+      .clear-swatch .clear-x { color: rgb(0, 0, 0); font-weight: 700; font-size: 1.1em; }
     </style>
   </head>
   <body>
@@ -65,7 +67,16 @@
         swatchContainer.appendChild(swatch);
       });
 
-      function processColor(color) {
+      // Add a special "clear" swatch that clears background color (crossed-out)
+      const clearSwatch = document.createElement('div');
+      clearSwatch.className = 'swatch clear-swatch';
+  // visual styling moved to CSS classes above
+      clearSwatch.dataset.color = 'CLEAR';
+      clearSwatch.innerHTML = '<span class="clear-x">✕</span>';
+      swatchContainer.appendChild(clearSwatch);
+
+      function processColor(payload) {
+        // payload is an object like { color: '#ffff00' } or { clear: true }
         google.script.run
           .withSuccessHandler(function() {
             google.script.host.close();
@@ -73,23 +84,22 @@
           .withFailureHandler(function(error) {
             alert(error.message);
           })
-          .processHighlight({ color: color });
+          .processHighlight(payload);
       }
 
       const colorInput = document.getElementById('color');
 
-      swatchContainer.addEventListener('click', function(e) {
-        if (e.target.classList.contains('swatch')) {
-          const c = e.target.dataset.color;
-          colorInput.value = c;
-          processColor(c);
-        }
+      Array.from(swatchContainer.children).forEach(child => {
+        child.addEventListener('click', function(e) {
+            if (e.currentTarget.classList.contains('swatch')) {
+                processColor({ color: e.currentTarget.dataset.color });
+            } 
+        });
       });
 
       document.getElementById('highlightForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const color = colorInput.value;
-        processColor(color);
+        processColor({ color: colorInput.value });
       });
     </script>
   </body>

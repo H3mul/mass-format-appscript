@@ -59,25 +59,19 @@ function showColorPrompt() {
 }
 
 function processHighlight(formObject: any) {
-  const color = formObject.color;
+  // formObject may be { color: '#rrggbb' } or { clear: true }
+  if (formObject && formObject.clear) {
+    // user requested clearing the background color
+    highlightSelectedText('CLEAR');
+    return;
+  }
 
+  const color = formObject && formObject.color;
   if (color) {
     highlightSelectedText(color);
   } else {
     DocumentApp.getUi().alert('Please select a color.');
   }
-}
-
-function highlightSelectedYellow() {
-  highlightSelectedText('#ffff00');
-}
-
-function highlightSelectedGreen() {
-  highlightSelectedText('#00ff00');
-}
-
-function highlightSelectedCyan() {
-  highlightSelectedText('#00ffff');
 }
 
 function getSelectedText() {
@@ -94,9 +88,8 @@ function getSelectedText() {
     var element = selectedElements[i].getElement();
 
     // Check if the element is editable text
-    const maybeEdit = (element as any).editAsText;
-    if (typeof maybeEdit === 'function') {
-      var textElement = maybeEdit.call(element);
+    if (element.editAsText) {
+      var textElement = element.editAsText();
       if (selectedElements[i].isPartial()) {
         // If only part of the element is selected, get the specific range
         theText += textElement.getText().substring(
@@ -139,8 +132,14 @@ function highlightWord(wordToFind: string, highlightColor: string) {
     const text = element.asText();
     const startIndex = foundElement.getStartOffset();
     const endIndex = foundElement.getEndOffsetInclusive();
-
-    text.setBackgroundColor(startIndex, endIndex, highlightColor);
+    if (highlightColor === 'CLEAR') {
+      // Clear the background color by setting the BACKGROUND_COLOR attribute to null
+      const attrs: any = {};
+      attrs[DocumentApp.Attribute.BACKGROUND_COLOR] = null;
+      text.setAttributes(startIndex, endIndex, attrs);
+    } else {
+      text.setBackgroundColor(startIndex, endIndex, highlightColor);
+    }
     count++;
 
     foundElement = body.findText(searchPattern, foundElement);
