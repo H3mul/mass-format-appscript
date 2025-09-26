@@ -1,4 +1,11 @@
 /**
+ * NOTE: This file is generated from the repository at https://github.com/H3mul/mass-format-appscript
+ *
+ * To make changes, please modify the source code and push it to the repository.
+ * This will ensure that the changes are not overwritten by a future deployment.
+ */
+
+/**
  * Reads doc IDs from script parameters and installs onOpen triggers for each.
  * Expects a comma-separated list of doc IDs in script properties under 'DOC_IDS'.
  */
