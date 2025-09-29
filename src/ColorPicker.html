@@ -1,105 +1,155 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <base target="_top">
     <style>
-      body {
-        font-family: sans-serif;
-        padding: 10px;
-      }
-      label, input, button {
-        display: inline-block;
-        margin-bottom: 10px;
-        width: 100%;
-        box-sizing: border-box;
-      }
-      input[type="color"] {
-        padding: 0;
-        border: none;
-      }
-      #swatch-container {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 10px;
-        margin-bottom: 15px;
-      }
-      .swatch {
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        border-radius: 50%;
-        cursor: pointer;
-        border: 1px solid #ccc;
-      }
-      p {
-        margin-top: 15px;
-        margin-bottom: 5px;
-        font-size: 0.9em;
-      }
-      hr {
-        border: none;
-        border-top: 1px solid #eee;
-      }
-      .clear-swatch { position: relative; display: flex; align-items: center; justify-content: center; background-color: #ffffff; border: 1px dashed #bbb; }
-      .clear-swatch .clear-x { color: rgb(0, 0, 0); font-weight: 700; font-size: 1.1em; }
+        body {
+            font-family: sans-serif;
+            padding: 10px;
+        }
+
+        label,
+        input,
+        button {
+            display: inline-block;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="color"] {
+            padding: 0;
+            border: none;
+        }
+
+        #swatch-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .swatch {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid #ccc;
+        }
+
+        p {
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #eee;
+        }
+
+        .clear-swatch {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            border: 1px dashed #bbb;
+        }
+
+        .clear-swatch .clear-x {
+            color: rgb(0, 0, 0);
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .swatch-selected {
+            position: relative;
+        }
+
+        .swatch-selected::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(0, 0, 0, 0.6);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <div id="swatch-container"></div>
     <hr>
     <p>Or pick a custom color:</p>
     <form id="highlightForm">
-      <input type="color" id="color" name="color" value="#ffff00">
-      <button type="submit">OK</button>
+        <input type="color" id="color" name="color" value="#ffff00">
+        <button type="submit">OK</button>
     </form>
     <script>
-      const colors = [
-        '#ffff00', '#00ff00', '#00ffff', '#ff00ff', '#ff9900',
-        '#adff2f', '#ff69b4', '#87cefa', '#ff0000', '#c0c0c0'
-      ];
+        const colors = [
+            '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00',
+            '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
+        ];
 
-      const swatchContainer = document.getElementById('swatch-container');
-      colors.forEach(color => {
-        const swatch = document.createElement('div');
-        swatch.className = 'swatch';
-        swatch.style.backgroundColor = color;
-        swatch.dataset.color = color;
-        swatchContainer.appendChild(swatch);
-      });
-
-      // Add a special "clear" swatch that clears background color (crossed-out)
-      const clearSwatch = document.createElement('div');
-      clearSwatch.className = 'swatch clear-swatch';
-  // visual styling moved to CSS classes above
-      clearSwatch.dataset.color = 'CLEAR';
-      clearSwatch.innerHTML = '<span class="clear-x">✕</span>';
-      swatchContainer.appendChild(clearSwatch);
-
-      function processColor(payload) {
-        // payload is an object like { color: '#ffff00' } or { clear: true }
-        google.script.run
-          .withSuccessHandler(function() {
-            google.script.host.close();
-          })
-          .withFailureHandler(function(error) {
-            alert(error.message);
-          })
-          .processHighlight(payload);
-      }
-
-      const colorInput = document.getElementById('color');
-
-      Array.from(swatchContainer.children).forEach(child => {
-        child.addEventListener('click', function(e) {
-            if (e.currentTarget.classList.contains('swatch')) {
-                processColor({ color: e.currentTarget.dataset.color });
-            } 
+        const swatchContainer = document.getElementById('swatch-container');
+        colors.forEach(color => {
+            const swatch = document.createElement('div');
+            swatch.className = 'swatch';
+            swatch.style.backgroundColor = color;
+            swatch.dataset.color = color;
+            swatchContainer.appendChild(swatch);
         });
-      });
 
-      document.getElementById('highlightForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        processColor({ color: colorInput.value });
-      });
+        // Add a special "clear" swatch that clears background color (crossed-out)
+        const clearSwatch = document.createElement('div');
+        clearSwatch.className = 'swatch clear-swatch';
+        // visual styling moved to CSS classes above
+        clearSwatch.dataset.color = 'CLEAR';
+        clearSwatch.innerHTML = '<span class="clear-x">✕</span>';
+        swatchContainer.appendChild(clearSwatch);
+
+        function processColor(payload) {
+            // payload is an object like { color: '#ffff00' } or { clear: true }
+            google.script.run
+                .withSuccessHandler(function () {
+                    google.script.host.close();
+                })
+                .withFailureHandler(function (error) {
+                    alert(error.message);
+                })
+                .processHighlight(payload);
+        }
+
+        const colorInput = document.getElementById('color');
+
+        // Set initial color if provided from server
+        if (window.initialColor) {
+            colorInput.value = window.initialColor;
+            
+            // Mark the matching swatch with a checkmark
+            Array.from(swatchContainer.children).forEach(child => {
+                if (child.dataset.color === window.initialColor) {
+                    child.classList.add('swatch-selected');
+                }
+            });
+        }
+
+        Array.from(swatchContainer.children).forEach(child => {
+            child.addEventListener('click', function (e) {
+                if (e.currentTarget.classList.contains('swatch')) {
+                    processColor({ color: e.currentTarget.dataset.color });
+                }
+            });
+        });
+
+        document.getElementById('highlightForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            processColor({ color: colorInput.value });
+        });
     </script>
-  </body>
+</body>

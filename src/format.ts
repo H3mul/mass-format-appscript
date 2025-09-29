@@ -40,7 +40,7 @@ function installOnOpenTriggerForDoc(docId: string) {
 function onOpen() {
   DocumentApp.getUi()
     .createMenu('Mass Format')
-    .addItem('Highlight Selection everywhere', 'showColorPrompt')
+    .addItem('Highlight selection everywhere', 'showColorPrompt')
     .addToUi();
 }
 
@@ -54,9 +54,20 @@ function showColorPrompt() {
     DocumentApp.getUi().alert('Please select a word or phrase to highlight first.');
     return;
   }
-  const html = HtmlService.createHtmlOutputFromFile('src/ColorPicker')
-    .setWidth(200)
-
+  
+  const currentColor = getCurrentBackgroundColor();
+  let html = HtmlService.createHtmlOutputFromFile('src/ColorPicker');
+  
+  if (currentColor) {
+    const htmlContent = html.getContent();
+    const modifiedContent = htmlContent.replace(
+      '<script>',
+      '<script>window.initialColor = "' + currentColor + '";'
+    );
+    html = HtmlService.createHtmlOutput(modifiedContent);
+  }
+  
+  html.setWidth(200);
   DocumentApp.getUi().showModalDialog(html, 'Select a Color');
 }
 
@@ -76,15 +87,14 @@ function processHighlight(formObject: any) {
   }
 }
 
-function getSelectedText() {
+function processSelectedElements(callback: (textElement: any, rangeElement: any) => any) {
   var selection = DocumentApp.getActiveDocument().getSelection();
 
   if (!selection) {
-    return "";
+    return null;
   }
 
   var selectedElements = selection.getRangeElements();
-  var theText = "";
 
   for (var i = 0; i < selectedElements.length; i++) {
     var element = selectedElements[i].getElement();
@@ -92,19 +102,45 @@ function getSelectedText() {
     // Check if the element is editable text
     if (element.editAsText) {
       var textElement = element.editAsText();
-      if (selectedElements[i].isPartial()) {
-        // If only part of the element is selected, get the specific range
-        theText += textElement.getText().substring(
-          selectedElements[i].getStartOffset(),
-          selectedElements[i].getEndOffsetInclusive() + 1
-        );
-      } else {
-        // If the entire element is selected
-        theText += textElement.getText();
+      var result = callback(textElement, selectedElements[i]);
+      if (result !== undefined) {
+        return result;
       }
     }
   }
+  return null;
+}
+
+function getSelectedText() {
+  var theText = "";
+  
+  processSelectedElements((textElement, rangeElement) => {
+    if (rangeElement.isPartial()) {
+      // If only part of the element is selected, get the specific range
+      theText += textElement.getText().substring(
+        rangeElement.getStartOffset(),
+        rangeElement.getEndOffsetInclusive() + 1
+      );
+    } else {
+      // If the entire element is selected
+      theText += textElement.getText();
+    }
+  });
+  
   return theText;
+}
+
+function getCurrentBackgroundColor() {
+  return processSelectedElements((textElement, rangeElement) => {
+    var startOffset = rangeElement.isPartial() ? rangeElement.getStartOffset() : 0;
+    
+    // Get the background color of the first character in the selection
+    var backgroundColor = textElement.getBackgroundColor(startOffset);
+    
+    if (backgroundColor && backgroundColor !== '#000000') {
+      return backgroundColor;
+    }
+  });
 }
 
 function highlightSelectedText(color) {
